@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./slopify # Le contexte de build est le dossier courant (racine de votre projet)
+      dockerfile: Dockerfile # Assurez-vous que votre Dockerfile frontend est à la racine
+    ports:
+      - "3000:5173" # Port par défaut de Vite
+    volumes:
+      - ./slopify:/app
+      - /app/node_modules
+    working_dir: /app
+    # environment:
+      # - REACT_APP_BACKEND_URL=http://localhost:4000/graphql
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./slopify-server # Le contexte de build est le dossier courant (racine de votre projet)
+      dockerfile: Dockerfile # Assurez-vous que votre Dockerfile frontend est à la racine
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./slopify-server:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/slopify
+      # Autres variables d'environnement
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

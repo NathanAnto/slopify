@@ -1,0 +1,22 @@
+# Utiliser une image Node.js comme base
+FROM node:18-alpine
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de package
+COPY ./package*.json ./
+
+# Installer les dépendances
+RUN npm install
+
+# Copier le reste du code source
+COPY . .
+
+# Exposer le port sur lequel l'API sera accessible
+EXPOSE 4000 
+# Ou le port que vous utilisez pour votre API
+
+# Commande pour démarrer l'application Express.js
+CMD ["npm", "run", "dev"] 
+# Ou "node index.js", selon votre script de démarrage
