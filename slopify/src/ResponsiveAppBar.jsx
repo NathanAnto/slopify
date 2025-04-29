@@ -8,10 +8,9 @@ import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
+import { NavLink } from 'react-router-dom';
 
 const pages = ['Map', 'Events', 'My Events'];
 const settings = ['Profile', 'Logout'];
@@ -34,17 +33,17 @@ function ResponsiveAppBar() {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
+  
+  const getLink = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '-')
+  };
 
   return (
     <AppBar position="static">
     <Container maxWidth="xl">
       <Toolbar disableGutters>
 
-        {/* Slopify Logo */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }}>
-          <img src="/20250318_102327_slopify.png" alt="Logo" height="30" />
-        </Box>
-
+        {/*  MOBILE */}
         <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
           <IconButton
             size="large"
@@ -73,36 +72,67 @@ function ResponsiveAppBar() {
             sx={{ display: { xs: 'block', md: 'none' } }}
           >
             {pages.map((page) => (
-              <MenuItem key={page} onClick={handleCloseNavMenu}>
-                <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
+              <MenuItem key={page}>
+                <NavLink
+                  to={`/${getLink(page)}`} // Generate URL
+                  key={page}
+                  onClick={handleCloseNavMenu}
+                  style={({ isActive }) => ({
+                    my: 2,
+                    display: 'block',
+                    textDecoration: 'none', // Remove underline from NavLink
+                    fontWeight: isActive ? 'bold' : 'normal', // Make font bold when active
+                    color: isActive ? 'rgba(63,81,181, 0.5)' : 'black', // Example: Add background color when active
+                    padding: '8px 16px', // Add some padding
+                    borderRadius: '4px', // Add some rounded corners
+                    textTransform: 'uppercase',
+                  })} 
+                >
+                  {page}
+                </NavLink>
               </MenuItem>
             ))}
           </Menu>
         </Box>
 
-        {/*  MOBILE */}
-        {/* Slopify Logo */}        
+        {/* Slopify Logo Mobile */}        
         <Box sx={{
           display: { xs: 'flex', md: 'none' },
           flexGrow: 1,
           }}>
           <img src="/20250318_102327_slopify.png" alt="Logo" height="30" />
         </Box>
+
+        {/* Slopify Logo */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }}>
+          <img src="/20250318_102327_slopify.png" alt="Logo" height="30" />
+        </Box>
+
         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
           {pages.map((page) => (
-            <Button
+            <NavLink
+              to={`/${getLink(page)}`}
               key={page}
-              onClick={handleCloseNavMenu}
-              sx={{ my: 2, color: 'white', display: 'block' }}
+              style={({ isActive }) => ({
+                my: 2,
+                color: 'white',
+                display: 'block',
+                textDecoration: 'none', // Remove underline from NavLink
+                backgroundColor: isActive ? 'rgba(63,81,181, 0.5)' : 'transparent', // Example: Add background color when active
+                padding: '8px 16px', // Add some padding
+                borderRadius: '4px', // Add some rounded corners
+                textTransform: 'uppercase',
+              })}
             >
               {page}
-            </Button>
+            </NavLink>
           ))}
         </Box>
+
         <Box sx={{ flexGrow: 0 }}>
           <Tooltip title="Open settings">
             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-              <Avatar alt="Remy Sharp" src="/Pigue.png" />
+              <Avatar alt="Piiiigue" src="/Pigue.png" />
             </IconButton>
           </Tooltip>
           <Menu

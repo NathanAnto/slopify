@@ -5,7 +5,6 @@ import App from "./App.jsx";
 import CssBaseline from "@mui/material/CssBaseline";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import ResponsiveAppBar from "./ResponsiveAppBar.jsx";
 
 const theme = createTheme({
     
@@ -20,7 +19,6 @@ createRoot(document.getElementById("root")).render(
     <StrictMode>
         <CssBaseline>
             <ThemeProvider theme={theme}>
-                <ResponsiveAppBar />
                 <App />
             </ThemeProvider>
         </CssBaseline>

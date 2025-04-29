@@ -5,7 +5,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copier les fichiers de package (package.json et lock file)
-COPY ./package*.json ./
+COPY package*.json ./
 
 # Installer les dépendances
 RUN npm install
@@ -17,9 +17,9 @@ COPY . .
 EXPOSE 5173
 
 # Construire l'application React avec Vite
-# RUN npm run build
 CMD ["npm", "run", "dev"]
 
+# RUN npm run build
 # # Étape pour servir l'application (utiliser un serveur web léger comme nginx)
 # FROM nginx:stable-alpine
 
