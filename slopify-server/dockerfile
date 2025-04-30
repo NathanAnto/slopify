@@ -15,8 +15,5 @@ COPY . .
 
 # Exposer le port sur lequel l'API sera accessible
 EXPOSE 4000 
-# Ou le port que vous utilisez pour votre API
 
-# Commande pour démarrer l'application Express.js
-CMD ["npm", "run", "dev"] 
-# Ou "node index.js", selon votre script de démarrage
+CMD ["npm", "run", "dev"]

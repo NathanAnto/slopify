@@ -5,14 +5,19 @@ import {
   Popup
 } from 'react-leaflet'
 
-import eventsData from "../eventsData"
 import "./map.css"
 
 import { format, parse } from 'date-fns';
+import useEvents from '../hooks/useEvents';
 
 function Map() {
-    const date_format = 'dd/MM/yyyy'
     const sion_position = [46.2331, 7.3606];
+    const { events, loading, error } = useEvents()
+    const date_format = 'dd.MM.yyyy'
+  
+    if(loading) return <p>Loading events...</p>
+
+    if(error) return <p>Can't read data...</p>
 
     return (
         <MapContainer center={sion_position} zoom={3} scrollWheelZoom={true}>
@@ -21,7 +26,7 @@ function Map() {
                 url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             />
 
-            {eventsData.map((e, index) => (
+            {events.map((e, index) => (
                 <Marker key={index} position={e.location}>
                     <Popup>
                         <h3>{e.name}</h3>
