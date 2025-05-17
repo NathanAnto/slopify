@@ -27,6 +27,25 @@ const eventSchema = new SimpleSchema({
   }
 });
 
+const userSchema = new SimpleSchema({
+  email: {
+    type: String,
+    regEx: SimpleSchema.RegEx.Email, // Validate email format
+  },
+  password: {
+    type: String,
+    min: 6, // Minimum password length
+  },
+  firstname: {
+    type: String,
+    optional: true, // Optional field
+  },
+  lastname: {
+    type: String,
+    optional: true, // Optional field
+  },
+});
+
 async function bootstrap() {
   try {
     await client.connect();
