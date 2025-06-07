@@ -8,16 +8,31 @@ import {
 import "./map.css"
 
 import { format, parse } from 'date-fns';
-import useEvents from '../hooks/useEvents';
+import { gql, useQuery } from "@apollo/client";
+
+const GET_EVENTS = gql`
+  query {
+    publicEvents {
+      _id
+      name
+      dateFrom
+      dateTo
+      artists
+      location
+    }
+  }
+`;
 
 function Map() {
-    const sion_position = [46.2331, 7.3606];
-    const { events, loading, error } = useEvents()
+    const sion_position = [46.2331, 7.3606];  
+    const { data, loading, error } = useQuery(GET_EVENTS)
     const date_format = 'dd.MM.yyyy'
   
     if(loading) return <p>Loading events...</p>
-
+  
     if(error) return <p>Can't read data...</p>
+
+    const events = data?.publicEvents
 
     return (
         <MapContainer center={sion_position} zoom={3} scrollWheelZoom={true}>

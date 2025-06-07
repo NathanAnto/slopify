@@ -3,7 +3,7 @@ dotenv.config()
 
 import express from 'express'
 import cors from 'cors'
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from "mongodb";
 
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -11,16 +11,34 @@ import { comparePassword, hashPassword } from "./password.js";
 import jwt from "jsonwebtoken";
 import cookieParser from 'cookie-parser';
 
+import { ApolloServer } from "apollo-server-express";
+import typeDefs from "./graphql/types.js";
+import resolvers from "./graphql/resolvers.js";
+
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 const app = express()
 const port = 4000
 
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+    'https://studio.apollographql.com'
+]; // Add your origins here
+
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
-})); // Allow all origins by default (use carefully!)
+}));
 
 app.use(express.json());
 
@@ -28,46 +46,47 @@ app.use(passport.initialize());
 
 app.use(cookieParser());
 
+await client.connect();
+let db = client.db();
+
 passport.use(
     "local",
     new LocalStrategy({
         usernameField: 'email',
         passwordField: 'password'
     },
-    async function (email, password, done) {
-        try {
-            // Connect to the database
-            await client.connect();
-            const db = client.db();
-            const usersCollection = db.collection('users');
+        async function (email, password, done) {
+            try {
+                // Connect to the database
+                const usersCollection = db.collection('users');
 
-            // Find the user by email
-            const user = await usersCollection.findOne({ email });
+                // Find the user by email
+                const user = await usersCollection.findOne({ email });
 
-            // If the user is not found, return an error
-            if (!user) {
-                console.log("No user found");
-                return done(null, false, { message: "Utilisateur non trouvé" });
+                // If the user is not found, return an error
+                if (!user) {
+                    console.log("No user found");
+                    return done(null, false, { message: "Utilisateur non trouvé" });
+                }
+
+                // Check if the password matches
+                const isMatch = await comparePassword({
+                    user,
+                    password,
+                });
+
+                // If the password is incorrect, return an error
+                if (!isMatch) {
+                    return done(null, false, { message: "Mot de passe incorrect" });
+                }
+
+                // If authentication is successful, return the user
+                return done(null, user);
+            } catch (error) {
+                // Handle any errors during the process
+                return done(error);
             }
-
-            // Check if the password matches
-            const isMatch = await comparePassword({
-                user,
-                password,
-            });
-
-            // If the password is incorrect, return an error
-            if (!isMatch) {
-                return done(null, false, { message: "Mot de passe incorrect" });
-            }
-
-            // If authentication is successful, return the user
-            return done(null, email);
-        } catch (error) {
-            // Handle any errors during the process
-            return done(error);
-        }
-    })
+        })
 );
 
 const getCookieOptions = () => {
@@ -77,25 +96,6 @@ const getCookieOptions = () => {
         sameSite: process.env.DEV_MODE ? "Lax" : "None",
     };
 };
-
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-
-app.get("/events", async (req, res) => {
-    try {
-        await client.connect();
-        const db = client.db();
-        const eventsCollection = db.collection('events');
-        const events = await eventsCollection.find().toArray();
-        res.json(events);
-    } catch (error) {
-        console.error('Erreur lors de la récupération des événements:', error);
-        res.status(500).json({ error: 'Impossible de récupérer les événements' });
-    } finally {
-        await client.close();
-    }
-});
 
 app.post("/signup", async (req, res, next) => {
     const { email, password } = req.body;
@@ -117,9 +117,6 @@ app.post("/signup", async (req, res, next) => {
     } catch (error) {
         console.error('Erreur lors de la création de l\'utilisateur:', error);
         res.status(500).json({ error: 'Impossible de créer l\'utilisateur' });
-    }
-    finally {
-        await client.close();
     }
 });
 
@@ -164,6 +161,26 @@ function authenticateToken(req, res, next) {
 app.get("/me", authenticateToken, (req, res) => {
     res.json({ user: req.user }); // user info from decoded token
 });
+
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: ({ req }) => {
+        const token = req.cookies?.token;
+        let user = null;
+
+        if (!token) return { db }; // no user
+    
+        try {
+          user = jwt.verify(token, process.env.JWT_SECRET);
+        } catch {}
+
+        return { user, db };
+      },
+});
+
+await server.start();
+server.applyMiddleware({ app, cors: false })
 
 app.listen(port, () => {
     console.log(`Slopify listening on port: ${port}`)

@@ -9,6 +9,8 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import { useMe } from "./hooks/useMe";
 import UserContext from "./UserContext.jsx";
+import { ApolloProvider } from "@apollo/client";
+import client from "./graphql/apollo.js";
 
 function App() {
   const { me, isLoading, refetchMe, logout } = useMe();
@@ -21,23 +23,25 @@ function App() {
   return (
     <UserContext.Provider value={{ me, refetchMe, logout, isLoading }}>
       <Router>
-        <ResponsiveAppBar />
-        <Routes>
-          {me ? (
-            <>
-              <Route path="/map" element={<Map />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/my-events" element={<MyEvents />} />
-            </>
-          ) : (
-            <>
-              <Route path="/login" element={!me ? <Login /> : <Navigate to="/map" />} />
-              <Route path="/signup" element={!me ? <SignUp /> : <Navigate to="/map" />} />
-            </>
-          )}
-          
-          <Route path="*" element={<Navigate to={me ? "/map" : "/login"} />} />
-        </Routes>
+        <ApolloProvider client={client}>
+          <ResponsiveAppBar />
+          <Routes>
+            {me ? (
+              <>
+                <Route path="/map" element={<Map />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/my-events" element={<MyEvents />} />
+              </>
+            ) : (
+              <>
+                <Route path="/login" element={!me ? <Login /> : <Navigate to="/map" />} />
+                <Route path="/signup" element={!me ? <SignUp /> : <Navigate to="/map" />} />
+              </>
+            )}
+            
+            <Route path="*" element={<Navigate to={me ? "/map" : "/login"} />} />
+          </Routes>
+        </ApolloProvider>
       </Router>
     </UserContext.Provider>
   )
