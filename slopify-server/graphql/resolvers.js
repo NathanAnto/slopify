@@ -3,13 +3,13 @@ import { ObjectId } from "mongodb";
 const resolvers = {
   Query: {
     events: async (_, __, { user, db }) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return [] // throw new Error("Not authenticated");
 
       return await db.collection("events").find({ createdBy: user.id }).toArray();
     },
 
     publicEvents: async (_, __, { user, db }) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return [] // throw new Error("Not authenticated");
 
       return await db.collection("events").find({}).toArray();
     },
