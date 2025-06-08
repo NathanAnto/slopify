@@ -41,6 +41,28 @@ const resolvers = {
       return []; // Return an empty array if no suggestions found
     },
 
+    searchLocation: async (_, { name }, { user, db }) => {
+      if (!user) throw new Error("Not authenticated");
+      if(name === "") return []; // Return empty array if name is empty
+      console.log(`Searching for location: ${name}`);
+      // Using the nominatim API to search for locations
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&addressdetails=1`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch location suggestions");
+      }
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return data.map(location => ({
+          _id: location.place_id,
+          name: location.display_name,
+          lon: location.lon,
+          lat: location.lat,
+          address: location.address,
+        }));
+      }
+      return []; // Return an empty array if no suggestions found
+    },
+
     user: async (_, { id }, { user, db }) => {
       if (!user) return null;
       return await db.collection("users").findOne({ _id: new ObjectId(id) });

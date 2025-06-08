@@ -9,29 +9,11 @@ import "./map.css"
 
 import { format, parse } from 'date-fns';
 import { gql, useQuery } from "@apollo/client";
-
-const GET_EVENTS = gql`
-    query {
-        publicEvents {
-            _id
-            name
-            dateFrom
-            dateTo
-            artists {
-                _id
-                name
-                href
-                imageUrl
-            }
-            location
-        }
-    }
-`;
-
+import { GET_PUBLIC_EVENTS } from "../graphql/queries";
 
 function Map() {
     const sion_position = [46.2331, 7.3606];  
-    const { data, loading, error, refetch } = useQuery(GET_EVENTS)
+    const { data, loading, error, refetch } = useQuery(GET_PUBLIC_EVENTS)
     const date_format = 'dd.MM.yyyy'
   
     if(loading) return <p>Loading events...</p>

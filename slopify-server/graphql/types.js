@@ -7,7 +7,8 @@ const typeDefs = `
     dateFrom: String!
     dateTo: String!
     artists: [Artist]
-    location: [Float]
+    location: Location!
+    createdAt: String!
     createdBy: ID!
   }
 
@@ -16,6 +17,13 @@ const typeDefs = `
     href: String
     imageUrl: String
     name: String!
+  }
+
+  type Location {
+    _id: ID!
+    name: String!
+    lon: Float!
+    lat: Float!
   }
 
   type User {
@@ -35,12 +43,13 @@ const typeDefs = `
     publicEvents: [Event]
     me: User
     user(id: ID!): User
-    searchArtist(name: String!): [Artist]
+    searchArtist (name: String!): [Artist]
+    searchLocation (name: String!): [Location]
   }
 
   type Mutation {
-    createEvent(name: String!, dateFrom: String!, dateTo: String!, artists: [JSON], location: [Float]): Event
-    updateEvent(eventId: String!, name: String!, dateFrom: String!, dateTo: String!, artists: [JSON], location: [Float]): Event
+    createEvent(name: String!, dateFrom: String!, dateTo: String!, artists: [JSON], location: JSON): Event
+    updateEvent(eventId: String!, name: String!, dateFrom: String!, dateTo: String!, artists: [JSON], location: JSON): Event
     deleteEvent(eventId: String!): Boolean
 
     createUser(email: String!, password: String!): User
