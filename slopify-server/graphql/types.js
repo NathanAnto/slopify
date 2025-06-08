@@ -6,9 +6,16 @@ const typeDefs = `
     name: String!
     dateFrom: String!
     dateTo: String!
-    artists: [JSON]
+    artists: [Artist]
     location: [Float]
     createdBy: ID!
+  }
+
+  type Artist {
+    _id: ID!
+    href: String
+    imageUrl: String
+    name: String!
   }
 
   type User {
@@ -28,6 +35,7 @@ const typeDefs = `
     publicEvents: [Event]
     me: User
     user(id: ID!): User
+    searchArtist(name: String!): [Artist]
   }
 
   type Mutation {

@@ -14,6 +14,7 @@ import cookieParser from 'cookie-parser';
 import { ApolloServer } from "apollo-server-express";
 import typeDefs from "./graphql/types.js";
 import resolvers from "./graphql/resolvers.js";
+import axios from "axios";
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -97,6 +98,30 @@ const getCookieOptions = () => {
     };
 };
 
+
+const getSpotifyAccessToken = async () => {
+    const response = await axios.post(
+        "https://accounts.spotify.com/api/token",
+        new URLSearchParams({
+            grant_type: "client_credentials"
+        }),
+        {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + Buffer.from(
+                    process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET
+                ).toString("base64"),
+            }
+        }
+    );
+
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch Spotify access token");
+    }
+
+    return response.data.access_token;
+}
+
 app.post("/signup", async (req, res, next) => {
     const { email, password } = req.body;
     try {
@@ -165,17 +190,19 @@ app.get("/me", authenticateToken, (req, res) => {
 const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => {
+    context: async ({ req }) => {
         const token = req.cookies?.token;
         let user = null;
+        let spotifyToken = null;
 
         if (!token) return { db }; // no user
     
         try {
           user = jwt.verify(token, process.env.JWT_SECRET);
+          spotifyToken = await getSpotifyAccessToken()
         } catch {}
 
-        return { user, db };
+        return { user, db, spotifyToken };
       },
 });
 

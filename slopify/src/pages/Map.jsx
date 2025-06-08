@@ -11,27 +11,34 @@ import { format, parse } from 'date-fns';
 import { gql, useQuery } from "@apollo/client";
 
 const GET_EVENTS = gql`
-  query {
-    publicEvents {
-      _id
-      name
-      dateFrom
-      dateTo
-      artists
-      location
+    query {
+        publicEvents {
+            _id
+            name
+            dateFrom
+            dateTo
+            artists {
+                _id
+                name
+                href
+                imageUrl
+            }
+            location
+        }
     }
-  }
 `;
+
 
 function Map() {
     const sion_position = [46.2331, 7.3606];  
-    const { data, loading, error } = useQuery(GET_EVENTS)
+    const { data, loading, error, refetch } = useQuery(GET_EVENTS)
     const date_format = 'dd.MM.yyyy'
   
     if(loading) return <p>Loading events...</p>
   
     if(error) return <p>Can't read data...</p>
 
+    refetch()
     const events = data?.publicEvents
 
     return (
@@ -45,8 +52,23 @@ function Map() {
                 <Marker key={index} position={e.location}>
                     <Popup>
                         <h3>{e.name}</h3>
-                        <span>{format(parse(e.dateFrom, 'yyyyMMdd', new Date()), date_format)} - {format(parse(e.dateTo, 'yyyyMMdd', new Date()), date_format)}</span><br/>
-                        <span>{e.artists.map(artist => artist.name).join(', ')}</span>
+                        <span>
+                            {format(parse(e.dateFrom, 'yyyyMMdd', new Date()), date_format)} - {format(parse(e.dateTo, 'yyyyMMdd', new Date()), date_format)}
+                        </span>
+                        <div>
+                            {e.artists.map(artist => (
+                                <a key={artist._id} href={artist.href} target="_blank" style={{ display: 'flex', alignItems: 'center', marginTop: 6 }}>
+                                    {artist.imageUrl && (
+                                        <img 
+                                            src={artist.imageUrl} 
+                                            alt={artist.name} 
+                                            style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '50%', marginRight: 8 }} 
+                                        />
+                                    )}
+                                    <span>{artist.name}</span>
+                                </a>
+                            ))}
+                        </div>
                     </Popup>
                 </Marker>
             ))}

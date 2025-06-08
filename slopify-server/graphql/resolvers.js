@@ -14,6 +14,33 @@ const resolvers = {
       return await db.collection("events").find({}).toArray();
     },
 
+    searchArtist: async (_, { name }, { user, db, spotifyToken }) => {
+      if (!user) throw new Error("Not authenticated");
+      if (!spotifyToken) throw new Error("Spotify token is required");
+      if(name === "") return []; // Return empty array if name is empty
+
+      console.log(`Searching for artist: ${name} with token: ${spotifyToken}`);
+      
+      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist`, {
+        headers: {
+          Authorization: `Bearer ${spotifyToken}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch artist suggestions from Spotify");
+      }
+      const data = await response.json();
+      if (data.artists && data.artists.items.length > 0) {
+        return data.artists.items.map(artist => ({
+          _id: artist.id,
+          href: artist.href,
+          imageUrl: artist.images.length > 0 ? artist.images[0].url : null,
+          name: artist.name,
+        }));
+      }
+      return []; // Return an empty array if no suggestions found
+    },
+
     user: async (_, { id }, { user, db }) => {
       if (!user) return null;
       return await db.collection("users").findOne({ _id: new ObjectId(id) });

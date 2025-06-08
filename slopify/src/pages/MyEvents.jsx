@@ -17,6 +17,8 @@ import {
     createSvgIcon,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Autocomplete from "@mui/material/Autocomplete";
+import Chip from "@mui/material/Chip";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -29,8 +31,24 @@ const GET_EVENTS = gql`
             name
             dateFrom
             dateTo
-            artists
+            artists {
+                _id
+                name
+                href
+                imageUrl
+            }
             location
+        }
+    }
+`;
+
+const SEARCH_ARTIST = gql`
+    query SearchArtist($name: String!) {
+        searchArtist(name: $name) {
+            _id
+            href
+            imageUrl
+            name
         }
     }
 `;
@@ -40,7 +58,7 @@ const CREATE_EVENT = gql`
         $name: String!
         $dateFrom: String!
         $dateTo: String!
-        $artists: [JSON]
+        $artists: [JSON]!
         $location: [Float]
     ) {
         createEvent(
@@ -51,7 +69,12 @@ const CREATE_EVENT = gql`
             location: $location
         ) {
             _id
-            artists
+            artists {
+                _id
+                name
+                href
+                imageUrl
+            }
             createdBy
             dateFrom
             dateTo
@@ -90,13 +113,20 @@ function MyEvents() {
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
 
-    const { me, refetchMe, isLoading } = useContext(UserContext);
     const { data, loading, error, refetch } = useQuery(GET_EVENTS);
     const date_format = "dd.MM.yyyy";
 
     const [createEventMutation] = useMutation(CREATE_EVENT);
-
     const [deleteEventMutation] = useMutation(DELETE_EVENT);
+
+    const [artistInput, setArtistInput] = useState("");
+    const [selectedArtists, setSelectedArtists] = useState([]);
+
+    const {
+        data: suggestionData
+    } = useQuery(SEARCH_ARTIST, {
+        variables: { name: artistInput },
+    });
 
     const handleDialogOpen = () => {
         setCreateOpen(true);
@@ -110,27 +140,24 @@ function MyEvents() {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         console.log(formData);
+        console.log("Selected artists:", selectedArtists);
         createEventMutation({
             variables: {
                 name: formData.get("name"),
                 dateFrom: format(startDate, "yyyyMMdd"),
                 dateTo: format(endDate, "yyyyMMdd"),
-                artists: formData
-                    .get("artistes")
-                    .split(",")
-                    .map((artist) => ({
-                        name: artist.trim(),
-                    })),
+                artists: selectedArtists,
                 location: [
                     parseFloat(formData.get("latitude")),
                     parseFloat(formData.get("longitude")),
                 ],
-                createdBy: me.id,
+                // createdBy: me.id,
             },
         }).then(() => {
             refetch(); // Refetch events after creating a new event
         });
 
+        setSelectedArtists([]);
         handleDialogClose();
     };
 
@@ -140,11 +167,36 @@ function MyEvents() {
         });
     };
 
+    const handleAddArtist = () => {
+        const trimmed = artistInput.trim();
+        if (
+            trimmed &&
+            !selectedArtists.some((a) => a.name === trimmed)
+        ) {
+            // Try to find the artist object in suggestions
+            const artistObj = suggestedArtists.find(a => a.name === trimmed);
+            if (artistObj) {
+                setSelectedArtists([...selectedArtists, artistObj]);
+            } else {
+                setSelectedArtists([...selectedArtists, { name: trimmed }]);
+            }
+            setArtistInput("");
+        }
+    };
+
+    const handleRemoveArtist = (artistToRemove) => {
+        setSelectedArtists(
+            selectedArtists.filter((a) => a.name !== artistToRemove.name)
+        );
+    };
+
     if (loading) return <p>Loading events...</p>;
-
     if (error) return <p>Can't read data...</p>;
-
     const events = data?.events;
+
+    // if (suggLoading) return <p>Loading artists...</p>;
+    // if (suggError) return <p>Can't read artists data...</p>;
+    const suggestedArtists = suggestionData?.searchArtist || [];
 
     return (
         <Box
@@ -224,19 +276,61 @@ function MyEvents() {
                         />
                     </LocalizationProvider>
                     <br />
-
-                    <TextField
-                        autoFocus
-                        required
-                        margin='dense'
-                        id='artistes'
-                        name='artistes'
-                        label='Artists'
-                        type='text'
-                        fullWidth
-                        variant='outlined'
+                    
+                    <Autocomplete
+                        freeSolo
+                        options={suggestedArtists.filter(
+                            (option) => !selectedArtists.some((a) => a._id === option._id)
+                        )}
+                        getOptionLabel={(option) => option.name || ""}
+                        inputValue={artistInput}
+                        onInputChange={(_, newInputValue) => setArtistInput(newInputValue)}
+                        onChange={(_, value) => {
+                            if (value && value._id) {
+                                setArtistInput(value.name);
+                            } else {
+                                setArtistInput(value || "");
+                            }
+                        }}
+                        renderOption={(props, option) => (
+                            <li {...props} key={option._id} style={{ display: "flex", alignItems: "center" }}>
+                                {option.imageUrl && (
+                                    <img
+                                        src={option.imageUrl}
+                                        alt={option.name}
+                                        style={{ width: 32, height: 32, marginRight: 8, borderRadius: "50%" }}
+                                    />
+                                )}
+                                <span>{option.name}</span>
+                            </li>
+                        )}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Rechercher un artiste"
+                                margin="dense"
+                                variant="outlined"
+                                fullWidth
+                            />
+                        )}
                     />
-                    <br />
+                    <Button
+                        sx={{ mt: 1, mb: 1 }}
+                        variant="outlined"
+                        onClick={handleAddArtist}
+                        disabled={!artistInput.trim()}
+                    >
+                        Ajouter un artiste
+                    </Button>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+                        {selectedArtists.map((artist) => (
+                            <Chip
+                                key={artist.name}
+                                label={artist.name}
+                                onDelete={() => handleRemoveArtist(artist)}
+                            />
+                        ))}
+                    </Box>
 
                     <TextField
                         autoFocus

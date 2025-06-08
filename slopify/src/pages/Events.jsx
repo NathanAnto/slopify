@@ -3,17 +3,23 @@ import { gql, useQuery } from "@apollo/client";
 import { Box, Card, CardContent, Icon, Typography } from '@mui/material';
 
 const GET_EVENTS = gql`
-  query {
-    publicEvents {
-      _id
-      name
-      dateFrom
-      dateTo
-      artists
-      location
+    query {
+        publicEvents {
+            _id
+            name
+            dateFrom
+            dateTo
+            artists {
+                _id
+                name
+                href
+                imageUrl
+            }
+            location
+        }
     }
-  }
 `;
+
 
 function Events() {
   const { data, loading, error } = useQuery(GET_EVENTS)
