@@ -5,6 +5,7 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { ApolloServer } from "apollo-server-express"
+import { bootstrap } from './bootstrap.js'
 import passport from "passport"
 
 import { client, db } from './db.js'
@@ -69,7 +70,8 @@ const server = new ApolloServer({
 await server.start();
 server.applyMiddleware({ app, cors: false })
 
-app.listen(port, () => {
+app.listen(port, async () => {
+    await bootstrap()
     console.log(`Slopify listening on port: ${port}`)
 })
 

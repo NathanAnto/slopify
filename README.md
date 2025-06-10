@@ -40,7 +40,7 @@ cd slopify
 
 **3. Start the Application with Docker Compose:**
 ```bash
-docker-compose up --build
+docker-compose up -d --build
 ```
 This command does the following:
 
@@ -73,6 +73,16 @@ The project uses Docker volumes to allow you to make changes to the code on your
     *   Frontend: 3000 (host) -> 5173 (container)
     *   Backend: 4000 (host) -> 4000 (container)
     *   MongoDB: 27017 (host) -> 27017 (container)
+
+## Unit and Integration Tests
+
+To run the tests for the slopify server, you can run the following command:
+
+```bash
+docker-compose up backend_test --build --abort-on-container-exit
+```
+
+This will run a container using a test database.
 
 ## Common Issues and Troubleshooting
 

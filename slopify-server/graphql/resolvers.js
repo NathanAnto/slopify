@@ -31,9 +31,10 @@ const resolvers = {
       }
       const data = await response.json();
       if (data.artists && data.artists.items.length > 0) {
+        console.log(data)
         return data.artists.items.map(artist => ({
           _id: artist.id,
-          href: artist.href,
+          href: artist.external_urls?.spotify || "", 
           imageUrl: artist.images.length > 0 ? artist.images[0].url : null,
           name: artist.name,
         }));

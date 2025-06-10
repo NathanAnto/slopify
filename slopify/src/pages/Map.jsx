@@ -24,7 +24,7 @@ function Map() {
     const events = data?.publicEvents
 
     return (
-        <MapContainer center={sion_position} zoom={3} scrollWheelZoom={true}>
+        <MapContainer center={sion_position} zoom={10} scrollWheelZoom={true}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
