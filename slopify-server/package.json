@@ -7,7 +7,7 @@
     "init-data": "node bootstrap.js",
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +29,8 @@
     "simpl-schema": "^3.4.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "jest": "^30.0.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.1.1"
   }
 }

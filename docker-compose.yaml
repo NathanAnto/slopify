@@ -2,23 +2,21 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./slopify # Le contexte de build est le dossier courant (racine de votre projet)
-      dockerfile: Dockerfile # Assurez-vous que votre Dockerfile frontend est à la racine
+      context: ./slopify
+      dockerfile: Dockerfile
     ports:
-      - "3000:5173" # Port par défaut de Vite
+      - "3000:5173"
     volumes:
       - ./slopify:/app
       - /app/node_modules
     working_dir: /app
-    # environment:
-      # - REACT_APP_BACKEND_URL=http://localhost:4000/graphql
     depends_on:
       - backend
 
   backend:
     build:
-      context: ./slopify-server # Le contexte de build est le dossier courant (racine de votre projet)
-      dockerfile: Dockerfile # Assurez-vous que votre Dockerfile frontend est à la racine
+      context: ./slopify-server
+      dockerfile: Dockerfile
     ports:
       - "4000:4000"
     volumes:
@@ -28,7 +26,6 @@ services:
     command: npm run dev
     environment:
       - MONGODB_URI=mongodb://mongo:27017/slopify
-      # Autres variables d'environnement
     depends_on:
       - mongo
 
@@ -39,5 +36,28 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  # --- Services for Testing ---
+  backend_test:
+    build:
+      context: ./slopify-server
+      dockerfile: Dockerfile
+    environment:
+      MONGODB_URI: mongodb://test_db:27017/slopify_test # New test database
+      JWT_SECRET: test_jwt_secret # Use a specific JWT secret for tests
+    depends_on:
+      - test_db
+    # Override the command to run tests instead of starting the server
+    command: npm test # This will execute the 'test' script from package.json
+    volumes:
+      - ./slopify-server:/app
+      - /app/node_modules # Ensure node_modules are used from the container build
+
+  test_db:
+    image: mongo:6.0 # It's good practice to pin a specific MongoDB version for tests
+    # No need to expose ports for test_db unless you want to inspect it from host
+    volumes:
+      - test_db_data:/data/db # Persist data for the test run if you want to inspect it
+
 volumes:
   mongodb_data:
+  test_db_data:
